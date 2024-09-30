@@ -1,0 +1,54 @@
+version: '3.1'
+services:
+  app:
+    build: .
+    container_name: kyc_main
+    restart: always
+    depends_on:
+      - cache
+      - postgres
+    env_file:
+      - .env.production
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=kyc
+      - DB_USERNAME=admin
+      - DB_PASSWORD=123
+      - DB_SYNCHRONIZE=false
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+    ports:
+      - 8822:8822
+    networks:
+      - kyc_network
+  postgres:
+    container_name: kyc_database
+    image: postgres:14.7-alpine
+    restart: always
+    ports:
+      - '5433:5433'
+    environment:
+      - POSTGRES_DB=kyc
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=123
+    volumes:
+      - /home/kyc_database/:/var/lib/postgresql/data
+    networks:
+      - kyc_network
+  cache:
+    container_name: kyc_cache
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6373'
+    environment:
+      - REDIS_HOST=cache
+      - REDIS_PORT=6373
+    command: redis-server --save 20 1 --loglevel warning 
+    volumes: 
+      - /home/kyc_data-data/cache/:/data
+    networks:
+      - kyc_network
+networks:
+  kyc_network:
